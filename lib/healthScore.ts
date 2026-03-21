@@ -102,13 +102,14 @@ export function computeHealthScore(
   let logisticsRaw = 0;
   let logisticsMax = 0; // scales to 30 even if some indicators are unavailable
 
-  // Sub-component A: Trucking PPI (0–10 pts)
-  // Rising freight costs eat into margins — penalize upward trend.
-  const truck = shipping.find((s) => s.id === "truck_ppi");
-  if (truck) {
+  // Sub-component A: Diesel Fuel Price (0–10 pts)
+  // Diesel is the primary cost driver for domestic freight.
+  // Rising diesel = higher trucking rates = worse for manufacturers.
+  const diesel = shipping.find((s) => s.id === "diesel");
+  if (diesel) {
     logisticsMax += 10;
     // 0% change = 10pts, +5% = 5pts, +10% or more = 0pts
-    logisticsRaw += Math.max(0, Math.min(10, 10 - truck.changePercent));
+    logisticsRaw += Math.max(0, Math.min(10, 10 - diesel.changePercent));
   }
 
   // Sub-component B: Business Inventories/Sales Ratio (0–10 pts)
@@ -121,20 +122,17 @@ export function computeHealthScore(
     logisticsRaw += Math.max(0, Math.min(10, 10 - Math.abs(inv.changePercent) * 2));
   }
 
-  // Sub-component C: ISM Manufacturing PMI (0–10 pts)
-  // 50–55 = healthy expansion, ideal for manufacturers.
-  // Below 45 = contraction (low demand, potential destocking).
-  // Above 60 = overheating (supply shortages, long lead times).
-  const ism = shipping.find((s) => s.id === "ism_pmi");
-  if (ism) {
+  // Sub-component C: Manufacturing Production Index (0–10 pts)
+  // Rising output = healthy demand, good for supply chain efficiency.
+  // Declining output = contracting demand, risk of destocking.
+  const mfg = shipping.find((s) => s.id === "mfg_prod");
+  if (mfg) {
     logisticsMax += 10;
-    const pmi = ism.currentValue;
-    if (pmi >= 50 && pmi <= 55)       logisticsRaw += 10; // sweet spot
-    else if (pmi > 55 && pmi <= 60)   logisticsRaw += 7;  // hot but ok
-    else if (pmi >= 45 && pmi < 50)   logisticsRaw += 7;  // soft but manageable
-    else if (pmi > 60 && pmi <= 65)   logisticsRaw += 4;  // overheating risk
-    else if (pmi >= 40 && pmi < 45)   logisticsRaw += 4;  // contraction
-    else                               logisticsRaw += 0;  // extreme either way
+    const chg = mfg.changePercent;
+    if (chg >= 0.5)                   logisticsRaw += 10; // growing output
+    else if (chg >= 0 && chg < 0.5)   logisticsRaw += 7;  // flat but stable
+    else if (chg >= -1 && chg < 0)    logisticsRaw += 4;  // slight decline
+    else                               logisticsRaw += 0;  // contraction
   }
 
   // Normalize to 30 pts if some indicators are missing

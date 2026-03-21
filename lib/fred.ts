@@ -19,9 +19,9 @@ const SERIES = {
   steelPPI: "WPU1017",     // BLS PPI: Iron & Steel (index, monthly)
 
   // Shipping / Logistics
-  truckPPI: "PCU484000484000", // BLS PPI: Truck Transportation (monthly)
-  invRatio: "ISRATIO",         // Total Business: Inventories to Sales Ratio
-  ismPMI:   "NAPM",            // ISM Manufacturing PMI (>50 = expansion)
+  diesel:   "GASDESW",   // EIA: US On-Highway Diesel Fuel Prices ($/gal, weekly)
+  invRatio: "ISRATIO",   // Total Business: Inventories to Sales Ratio (monthly)
+  mfgProd:  "IPMAN",     // Fed: Industrial Production — Manufacturing Index (monthly)
 } as const;
 
 interface FredObs {
@@ -145,26 +145,26 @@ async function fetchSteelPPI(): Promise<CommodityData | null> {
 
 // ── Shipping fetchers ─────────────────────────────────────────────────────────
 
-async function fetchTruckPPI(): Promise<ShippingIndicator | null> {
-  const obs = await fetchSeries(SERIES.truckPPI, 14);
+async function fetchDiesel(): Promise<ShippingIndicator | null> {
+  const obs = await fetchSeries(SERIES.diesel, 20, "desc");
   if (!obs || obs.length < 2) return null;
 
   const points = toPoints(obs);
   const current = points.at(-1)!;
-  const prior = points.at(-2) ?? current;
+  const prior = points.at(-5) ?? points.at(-2) ?? current; // ~1 month ago
 
   return {
-    id: "truck_ppi",
-    name: "Domestic Freight (Trucking PPI)",
-    shortName: "Trucking Costs",
+    id: "diesel",
+    name: "Diesel Fuel Price",
+    shortName: "Diesel",
     currentValue: current.value,
     priorValue: prior.value,
     changePercent: calcChange(current.value, prior.value),
-    history: points,
-    unit: "index (2012=100)",
-    description: "BLS Producer Price Index for truck transportation. Rising index = higher domestic freight costs.",
+    history: points.slice(-16),
+    unit: "$/gallon",
+    description: "EIA US on-highway diesel retail price. Primary operating cost for domestic freight — directly impacts trucking rates.",
     higherIsBad: true,
-    source: "FRED / BLS PPI",
+    source: "FRED / EIA",
     lastUpdated: current.date,
   };
 }
@@ -193,8 +193,8 @@ async function fetchInventoryRatio(): Promise<ShippingIndicator | null> {
   };
 }
 
-async function fetchISMPMI(): Promise<ShippingIndicator | null> {
-  const obs = await fetchSeries(SERIES.ismPMI, 14);
+async function fetchMfgProduction(): Promise<ShippingIndicator | null> {
+  const obs = await fetchSeries(SERIES.mfgProd, 14);
   if (!obs || obs.length < 2) return null;
 
   const points = toPoints(obs);
@@ -202,17 +202,17 @@ async function fetchISMPMI(): Promise<ShippingIndicator | null> {
   const prior = points.at(-2) ?? current;
 
   return {
-    id: "ism_pmi",
-    name: "ISM Manufacturing PMI",
-    shortName: "Mfg. PMI",
+    id: "mfg_prod",
+    name: "Manufacturing Production Index",
+    shortName: "Mfg. Output",
     currentValue: current.value,
     priorValue: prior.value,
     changePercent: calcChange(current.value, prior.value),
     history: points,
-    unit: "diffusion index",
-    description: "ISM Manufacturing PMI. Above 50 = expansion (higher raw material demand). Below 50 = contraction.",
-    higherIsBad: false, // higher PMI = more demand = potentially higher prices
-    source: "FRED / ISM",
+    unit: "index (2017=100)",
+    description: "Federal Reserve Industrial Production index for manufacturing. Rising index = growing output and raw material demand.",
+    higherIsBad: false,
+    source: "FRED / Federal Reserve",
     lastUpdated: current.date,
   };
 }
@@ -234,9 +234,9 @@ export async function fetchAllCommodities(): Promise<CommodityData[]> {
 
 export async function fetchAllShipping(): Promise<ShippingIndicator[]> {
   const results = await Promise.all([
-    fetchTruckPPI(),
+    fetchDiesel(),
     fetchInventoryRatio(),
-    fetchISMPMI(),
+    fetchMfgProduction(),
   ]);
 
   return results.filter((r): r is ShippingIndicator => r !== null);

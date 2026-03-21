@@ -129,9 +129,9 @@ function MethodologyModal({ onClose }: { onClose: () => void }) {
       color: "text-brand",
       rows: [
         { item: "Structure", detail: "Three sub-components of 10pts each, scaled to 30 if any indicator is unavailable" },
-        { item: "Trucking PPI (10pts)", detail: "10 − change%. Rising freight costs directly eat into margins" },
+        { item: "Diesel Price (10pts)", detail: "10 − change%. Diesel is the primary cost driver for domestic freight — rising prices directly raise trucking rates" },
         { item: "Inventory/Sales Ratio (10pts)", detail: "10 − (2 × |change%|). Rewards stability — a big swing in either direction signals a demand shock or supply glut" },
-        { item: "ISM Manufacturing PMI (10pts)", detail: "50–55 = 10pts (sweet spot), 45–50 or 55–60 = 7pts, 40–45 or 60–65 = 4pts, extremes = 0pts. The 50–55 band means healthy expansion without supply chain overheating" },
+        { item: "Mfg. Production Index (10pts)", detail: "≥+0.5% change = 10pts, flat = 7pts, slight decline = 4pts, contraction = 0pts. Rising output means healthy demand and supply chain efficiency" },
       ],
     },
   ];
@@ -224,9 +224,9 @@ function MethodologyModal({ onClose }: { onClose: () => void }) {
                 ["Copper, Aluminum, Zinc, Nickel", "World Bank / IMF via FRED"],
                 ["WTI Crude Oil", "U.S. EIA via FRED"],
                 ["Steel (PPI)", "BLS — WPU1017 via FRED"],
-                ["Trucking Costs (PPI)", "BLS — PCU484 via FRED"],
+                ["Diesel Fuel Price", "U.S. EIA — GASDESW via FRED"],
                 ["Inventory/Sales Ratio", "U.S. Census Bureau via FRED"],
-                ["ISM Manufacturing PMI", "Institute for Supply Mgmt. via FRED"],
+                ["Mfg. Production Index", "Federal Reserve — IPMAN via FRED"],
               ].map(([label, source]) => (
                 <div key={label} className="bg-surface-raised border border-surface-border rounded p-2.5">
                   <div className="text-slate-400">{label}</div>
@@ -308,7 +308,7 @@ export function HealthScore({ score: s }: Props) {
               label="Logistics & Activity"
               value={s.logistics}
               max={s.logisticsMax}
-              description="Composite of trucking cost trends, business inventory/sales ratio stability, and ISM Manufacturing PMI health (50–55 range = optimal)."
+              description="Composite of diesel fuel price trend (freight cost proxy), business inventory/sales ratio stability, and manufacturing production index growth."
             />
           </div>
         </div>
