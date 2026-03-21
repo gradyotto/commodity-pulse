@@ -90,7 +90,11 @@ function MethodologyModal({ onClose }: { onClose: () => void }) {
   );
   useEffect(() => {
     document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = "";
+    };
   }, [handleKey]);
 
   const thresholds = [

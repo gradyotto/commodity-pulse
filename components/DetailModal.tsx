@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback } from "react";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
@@ -33,43 +33,19 @@ function fredUrl(id: string): string {
 }
 
 export function DetailModal({ target, onClose }: Props) {
-  const [analysis, setAnalysis] = useState("");
-  const [analysisStatus, setAnalysisStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
-  const hasFetched = useRef(false);
-
   const handleKey = useCallback(
     (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); },
     [onClose]
   );
+
   useEffect(() => {
     document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = "";
+    };
   }, [handleKey]);
-
-  // Auto-fetch analysis on open
-  useEffect(() => {
-    if (hasFetched.current) return;
-    hasFetched.current = true;
-
-    setAnalysisStatus("loading");
-    fetch("/api/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(target),
-    }).then(async (res) => {
-      if (!res.ok || !res.body) { setAnalysisStatus("error"); return; }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let text = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        text += decoder.decode(value, { stream: true });
-        setAnalysis(text);
-      }
-      setAnalysisStatus("done");
-    }).catch(() => setAnalysisStatus("error"));
-  }, [target]);
 
   const history = target.type === "commodity" ? target.data.history : target.data.history;
   const name     = target.type === "commodity" ? target.data.name     : target.data.name;
@@ -186,32 +162,6 @@ export function DetailModal({ target, onClose }: Props) {
             <p className="text-xs text-slate-700 font-mono mt-1 text-right">
               Dashed line = period average
             </p>
-          </div>
-
-          {/* Claude analysis */}
-          <div>
-            <h3 className="text-xs font-mono uppercase tracking-widest text-slate-500 mb-3">
-              AI Analysis
-            </h3>
-            {analysisStatus === "loading" && !analysis && (
-              <div className="flex items-center gap-2 text-xs text-slate-500 font-mono">
-                <span className="inline-block h-3 w-3 border-2 border-brand/30 border-t-brand rounded-full animate-spin" />
-                Analyzing with Claude…
-              </div>
-            )}
-            {analysisStatus === "error" && (
-              <p className="text-xs text-red-400 font-mono">Analysis unavailable — check ANTHROPIC_API_KEY</p>
-            )}
-            {analysis && (
-              <div className="space-y-3">
-                {analysis.split("\n\n").filter(Boolean).map((para, i) => (
-                  <p key={i} className="text-sm text-slate-300 leading-relaxed">{para}</p>
-                ))}
-                {analysisStatus === "loading" && (
-                  <span className="inline-block w-1.5 h-4 bg-brand ml-0.5 animate-pulse rounded-sm align-middle" />
-                )}
-              </div>
-            )}
           </div>
 
           {/* Footer */}
