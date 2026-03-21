@@ -82,6 +82,15 @@ export function BuildersBrief({ commodities, shipping }: Props) {
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const copyBrief = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* unsupported */ }
+  }, [content]);
 
   const generate = useCallback(async () => {
     setStatus("loading");
@@ -176,18 +185,42 @@ export function BuildersBrief({ commodities, shipping }: Props) {
                 Weekly Supply Chain Intelligence Report
               </div>
             </div>
-            <div className="text-right text-xs text-slate-600 font-mono">
-              <div>
-                {generatedAt
-                  ? new Date(generatedAt).toLocaleDateString("en-US", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })
-                  : "Generating…"}
+            <div className="flex flex-col items-end gap-2">
+              <div className="text-right text-xs text-slate-600 font-mono">
+                <div>
+                  {generatedAt
+                    ? new Date(generatedAt).toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : "Generating…"}
+                </div>
+                <div className="text-slate-700 mt-0.5 tracking-wider uppercase text-[10px]">Powered by Claude Opus 4.6</div>
               </div>
-              <div className="text-slate-700 mt-0.5 tracking-wider uppercase text-[10px]">Powered by Claude Opus 4.6</div>
+              {status === "done" && (
+                <button
+                  onClick={copyBrief}
+                  className="flex items-center gap-1.5 text-xs font-mono text-slate-500 hover:text-brand transition-colors"
+                >
+                  {copied ? (
+                    <>
+                      <svg className="w-3.5 h-3.5 text-green-400" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"/>
+                      </svg>
+                      <span className="text-green-400">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"/><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"/>
+                      </svg>
+                      Copy brief
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
 

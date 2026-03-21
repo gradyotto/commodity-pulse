@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { LineChart, Line, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import type { HealthScoreBreakdown } from "@/lib/healthScore";
+import type { ScoreRecord } from "@/lib/scoreHistory";
 import clsx from "clsx";
 
 interface Props {
   score: HealthScoreBreakdown;
+  history?: ScoreRecord[];
 }
 
 const COLOR_MAP = {
@@ -248,7 +251,7 @@ function MethodologyModal({ onClose }: { onClose: () => void }) {
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-export function HealthScore({ score: s }: Props) {
+export function HealthScore({ score: s, history = [] }: Props) {
   const [showModal, setShowModal] = useState(false);
   const colors = COLOR_MAP[s.color];
 
@@ -311,6 +314,30 @@ export function HealthScore({ score: s }: Props) {
               description="Composite of diesel fuel price trend (freight cost proxy), business inventory/sales ratio stability, and manufacturing production index growth."
             />
           </div>
+
+          {/* 30-day score history */}
+          {history.length > 1 && (
+            <div>
+              <div className="text-xs font-mono text-slate-600 uppercase tracking-wider mb-1">
+                30-Day Score Trend
+              </div>
+              <ResponsiveContainer width="100%" height={48}>
+                <LineChart data={history} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+                  <Tooltip
+                    contentStyle={{ background: "#141414", border: "1px solid #2a2d3a", borderRadius: 4, fontSize: 11, color: "#e8e8e8" }}
+                    formatter={(v: number) => [v, "Score"]}
+                    labelFormatter={(l: string) => l}
+                  />
+                  <ReferenceLine y={65} stroke="#2a2d3a" strokeDasharray="3 3" />
+                  <Line
+                    type="monotone" dataKey="score"
+                    stroke={colors.ring} strokeWidth={1.5}
+                    dot={false} activeDot={{ r: 3, fill: colors.ring }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </div>
 

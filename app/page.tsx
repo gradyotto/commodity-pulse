@@ -6,6 +6,7 @@ import { BuildersBrief } from "@/components/BuildersBrief";
 import { HealthScore } from "@/components/HealthScore";
 import { fetchAllCommodities, fetchAllShipping } from "@/lib/fred";
 import { computeHealthScore } from "@/lib/healthScore";
+import { recordScore, getScoreHistory } from "@/lib/scoreHistory";
 import type { CommodityData, ShippingIndicator } from "@/types";
 
 async function Dashboard() {
@@ -47,12 +48,25 @@ async function Dashboard() {
 
   const healthScore = computeHealthScore(commodities, shipping);
 
+  // Most recent data date across all series (for staleness warning)
+  const allDates = [
+    ...commodities.map((c) => c.lastUpdated),
+    ...shipping.map((s) => s.lastUpdated),
+  ].sort();
+  const lastDataDate = allDates.at(-1);
+
+  // Record today's score + fetch 30-day history (fire-and-forget for recording)
+  const [scoreHistory] = await Promise.all([
+    getScoreHistory(),
+    recordScore(healthScore.total, healthScore.label),
+  ]);
+
   return (
     <main className="max-w-5xl mx-auto px-4 py-8 space-y-10">
-      <Header fetchedAt={fetchedAt} />
+      <Header fetchedAt={fetchedAt} lastDataDate={lastDataDate} />
 
       {/* Health Score — top of page, most prominent */}
-      <HealthScore score={healthScore} />
+      <HealthScore score={healthScore} history={scoreHistory} />
 
       {/* Commodity Prices */}
       <section>
@@ -67,7 +81,7 @@ async function Dashboard() {
         <p className="text-xs text-slate-600 mt-2 font-mono">
           Monthly World Bank commodity prices (copper, aluminum, zinc, nickel) ·
           WTI crude oil (daily, EIA) · Steel: BLS PPI WPU1017 index.
-          Red = price rising (higher cost for buyers). Green = falling.
+          Red = price rising (higher cost for buyers). Green = falling. Click any card for AI analysis.
         </p>
       </section>
 
@@ -85,20 +99,17 @@ async function Dashboard() {
           </summary>
           <div className="mt-3 bg-surface-muted border border-surface-border rounded-lg p-4">
             <p className="text-slate-400 text-sm mb-3">
-              Add this iframe to any webpage to embed Commodity Pulse:
+              Add this iframe to any webpage to embed Tiber Pulse:
             </p>
             <pre className="text-xs font-mono text-slate-300 bg-surface rounded p-3 overflow-x-auto whitespace-pre-wrap">
 {`<iframe
-  src="https://your-domain.com"
+  src="https://pulse.tibermfg.com"
   width="100%"
   height="800"
   style="border:none;border-radius:8px;"
-  title="Commodity Pulse — Builder's Brief"
+  title="Tiber Commodity Pulse"
 ></iframe>`}
             </pre>
-            <p className="text-slate-600 text-xs mt-3">
-              Deploy to Vercel: <code className="text-slate-400">vercel --prod</code> from this directory.
-            </p>
           </div>
         </details>
       </section>

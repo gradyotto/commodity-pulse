@@ -1,8 +1,9 @@
 interface Props {
   fetchedAt: string;
+  lastDataDate?: string; // most recent date from any FRED series
 }
 
-export function Header({ fetchedAt }: Props) {
+export function Header({ fetchedAt, lastDataDate }: Props) {
   const date = new Date(fetchedAt).toLocaleString("en-US", {
     weekday: "short",
     month: "short",
@@ -13,13 +14,16 @@ export function Header({ fetchedAt }: Props) {
     timeZoneName: "short",
   });
 
+  // Warn if most recent FRED data is more than 5 days old (weekends, holidays, lag)
+  const isStale = lastDataDate
+    ? (Date.now() - new Date(lastDataDate).getTime()) > 5 * 24 * 60 * 60 * 1000
+    : false;
+
   return (
     <header className="border-b border-surface-border pb-5 mb-8">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-4">
-            {/* Tiber TT mark */}
-            {/* Tiber logo */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/tiber-logo.png" alt="Tiber" className="w-9 h-9 object-contain" />
             <div>
@@ -37,6 +41,7 @@ export function Header({ fetchedAt }: Props) {
             </div>
           </div>
         </div>
+
         <div className="flex flex-col items-end gap-2">
           <a
             href="https://tibermfg.com"
@@ -47,11 +52,21 @@ export function Header({ fetchedAt }: Props) {
             </svg>
             tibermfg.com
           </a>
-          <div className="text-xs font-mono text-slate-600 text-right tracking-wide">
-            <div>
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand mr-1.5 align-middle" />
-              LIVE — FRED / Federal Reserve
-            </div>
+
+          <div className="text-xs font-mono text-right tracking-wide">
+            {isStale ? (
+              <div className="flex items-center gap-1.5 justify-end text-yellow-500/80">
+                <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm0 3.5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4.5Zm0 7a.875.875 0 1 1 0-1.75.875.875 0 0 1 0 1.75Z"/>
+                </svg>
+                DATA MAY BE DELAYED — Weekend/Holiday
+              </div>
+            ) : (
+              <div className="text-slate-600">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand mr-1.5 align-middle" />
+                LIVE — FRED / Federal Reserve
+              </div>
+            )}
             <div className="mt-0.5 text-slate-700">Updated: {date}</div>
           </div>
         </div>
