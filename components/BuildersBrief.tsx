@@ -133,7 +133,7 @@ export function BuildersBrief({ commodities, shipping }: Props) {
     <section>
       <div className="flex items-center justify-between mb-3 gap-4">
         <h2 className="text-xs font-mono uppercase tracking-widest text-slate-500">
-          Tiber Brief — AI Analysis
+          Tiber Brief — On-Demand Market Analysis
         </h2>
         <button
           onClick={generate}
@@ -151,7 +151,7 @@ export function BuildersBrief({ commodities, shipping }: Props) {
               <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm1 10H7V7h2v4Zm0-5H7V4h2v2Z" />
               </svg>
-              {status === "done" ? "Regenerate Brief" : "Generate This Week's Brief"}
+              {status === "done" ? "Regenerate Brief" : "Generate Brief"}
             </>
           )}
         </button>
@@ -161,7 +161,7 @@ export function BuildersBrief({ commodities, shipping }: Props) {
         <div className="border border-surface-border border-dashed rounded-lg p-8 text-center">
           <div className="text-3xl mb-3">📋</div>
           <p className="text-slate-400 text-sm max-w-sm mx-auto font-mono tracking-wide">
-            Click <span className="text-brand font-medium">Generate This Week&apos;s Brief</span> to have Claude analyze the latest market data and produce a procurement intelligence report.
+            Click <span className="text-brand font-medium">Generate Brief</span> to have Claude analyze the current market data and produce a procurement intelligence report.
           </p>
         </div>
       )}
@@ -182,7 +182,7 @@ export function BuildersBrief({ commodities, shipping }: Props) {
                 TIBER BRIEF
               </div>
               <div className="text-xs text-slate-500 font-mono mt-0.5 tracking-wider uppercase">
-                Weekly Supply Chain Intelligence Report
+                AI-Generated Procurement Intelligence
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
