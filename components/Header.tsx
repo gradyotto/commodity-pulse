@@ -19,18 +19,27 @@ export function Header({ fetchedAt }: Props) {
         <div>
           <div className="flex items-center gap-4">
             {/* Tiber TT mark */}
-            <div className="flex flex-col gap-0.5">
-              <div className="flex gap-0.5">
-                <div className="w-2 h-1 bg-brand" />
-                <div className="w-0.5 h-1 bg-brand" />
-                <div className="w-2 h-1 bg-brand" />
-              </div>
-              <div className="flex gap-0.5 justify-center">
-                <div className="w-0.5 h-3 bg-brand" />
-                <div className="w-1.5 h-0 " />
-                <div className="w-0.5 h-3 bg-brand" />
-              </div>
-            </div>
+            {/* Tiber [T] logo mark */}
+            <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-9 h-9">
+              {/* Outer hexagon frame */}
+              <path d="M100 10L180 55V145L100 190L20 145V55L100 10Z" stroke="#2a2d3a" strokeWidth="1" />
+              {/* TT mark */}
+              <g fill="#eaeaea">
+                <rect x="45" y="60" width="50" height="8" />
+                <rect x="66" y="60" width="8" height="80" />
+                <rect x="105" y="60" width="50" height="8" />
+                <rect x="126" y="60" width="8" height="80" />
+              </g>
+              {/* Orange accent line */}
+              <line x1="50" y1="155" x2="150" y2="155" stroke="#ff8800" strokeWidth="2" />
+              {/* Corner accents */}
+              <circle cx="100" cy="10" r="3" fill="#ff8800" />
+              <circle cx="180" cy="55" r="2" fill="#2a2d3a" />
+              <circle cx="180" cy="145" r="2" fill="#2a2d3a" />
+              <circle cx="100" cy="190" r="2" fill="#2a2d3a" />
+              <circle cx="20" cy="145" r="2" fill="#2a2d3a" />
+              <circle cx="20" cy="55" r="2" fill="#2a2d3a" />
+            </svg>
             <div>
               <div className="flex items-baseline gap-2">
                 <h1 className="text-lg font-black tracking-tighter text-[#eaeaea] uppercase">
