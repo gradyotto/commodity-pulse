@@ -37,12 +37,23 @@ export function Header({ fetchedAt }: Props) {
             </div>
           </div>
         </div>
-        <div className="text-xs font-mono text-slate-600 text-right tracking-wide">
-          <div>
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand mr-1.5 align-middle" />
-            LIVE — FRED / Federal Reserve
+        <div className="flex flex-col items-end gap-2">
+          <a
+            href="https://tibermfg.com"
+            className="flex items-center gap-1.5 text-xs font-mono text-slate-500 hover:text-brand transition-colors tracking-wide"
+          >
+            <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M7.5 1.5h3v3M10.5 1.5L6 6M5 2H2a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V7" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            tibermfg.com
+          </a>
+          <div className="text-xs font-mono text-slate-600 text-right tracking-wide">
+            <div>
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand mr-1.5 align-middle" />
+              LIVE — FRED / Federal Reserve
+            </div>
+            <div className="mt-0.5 text-slate-700">Updated: {date}</div>
           </div>
-          <div className="mt-0.5 text-slate-700">Updated: {date}</div>
         </div>
       </div>
     </header>
