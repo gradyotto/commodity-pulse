@@ -11,16 +11,17 @@ const config: Config = {
       colors: {
         surface: {
           DEFAULT: "#0d0d0d",
-          raised: "#141414",
-          border: "#222222",
+          raised: "#111111",
+          border: "#2a2d3a",
           muted: "#1a1a1a",
         },
         brand: {
-          DEFAULT: "#f59e0b",
-          dim: "#92400e",
+          DEFAULT: "#ff8800",
+          dim: "#cc6d00",
         },
       },
       fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
         mono: ["'JetBrains Mono'", "monospace"],
       },
     },

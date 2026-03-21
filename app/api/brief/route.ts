@@ -100,7 +100,7 @@ export async function POST(req: Request) {
     day: "numeric",
   });
 
-  const systemPrompt = `You are a senior supply chain analyst who writes the weekly "Builder's Brief" — a concise, authoritative market intelligence report for procurement managers, operations directors, and executives at domestic hardware and manufacturing companies.
+  const systemPrompt = `You are a senior supply chain analyst who writes the weekly "Tiber Brief" — a concise, authoritative market intelligence report for procurement managers, operations directors, and executives at domestic hardware and manufacturing companies.
 
 Your audience buys raw materials (metals, plastics, energy) in volume. They care about:
 - How price changes affect their COGS and margins
@@ -110,7 +110,7 @@ Your audience buys raw materials (metals, plastics, energy) in volume. They care
 
 Tone: direct, professional, data-driven. No fluff. Use specific numbers.`;
 
-  const userPrompt = `Today is ${today}. Write the weekly Builder's Brief using the market data below.
+  const userPrompt = `Today is ${today}. Write the weekly Tiber Brief using the market data below.
 
 Structure the brief exactly as follows (use these Markdown headers):
 
