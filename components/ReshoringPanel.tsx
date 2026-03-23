@@ -85,9 +85,17 @@ export function ReshoringPanel({ categories }: Props) {
           Reshoring Opportunity Index
         </h2>
         {anyOilAdjusted && (
-          <span className="text-xs font-mono text-slate-600 flex items-center gap-1">
+          <span className="text-xs font-mono text-slate-600 flex items-center gap-1.5">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand" />
             Live energy adjustment applied
+            <span className="relative group cursor-default">
+              <svg className="w-3 h-3 text-slate-600 hover:text-slate-400 transition-colors" viewBox="0 0 16 16" fill="currentColor">
+                <path fillRule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14Zm0-9.5a.75.75 0 0 1 .75.75v4a.75.75 0 0 1-1.5 0v-4A.75.75 0 0 1 8 5.5Zm0-2.25a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5Z" clipRule="evenodd" />
+              </svg>
+              <span className="pointer-events-none absolute bottom-full right-0 mb-1.5 w-64 rounded-md bg-[#1a1a1a] border border-surface-border px-3 py-2 text-xs text-slate-300 leading-snug opacity-0 group-hover:opacity-100 transition-opacity z-10 font-sans normal-case tracking-normal">
+                Offshore energy and logistics costs are adjusted when live WTI crude oil diverges more than 3% from the $77/bbl 2024 annual average. US manufacturing is largely insulated (domestic natural gas), while longer offshore supply chains are more oil-sensitive.
+              </span>
+            </span>
           </span>
         )}
       </div>
