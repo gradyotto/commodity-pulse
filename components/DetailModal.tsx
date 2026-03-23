@@ -5,6 +5,7 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
 import type { CommodityData, ShippingIndicator } from "@/types";
+import { getTariff, landedCost } from "@/lib/tariffs";
 import clsx from "clsx";
 
 type Target =
@@ -16,20 +17,28 @@ interface Props {
   onClose: () => void;
 }
 
-function fredUrl(id: string): string {
-  const map: Record<string, string> = {
-    copper:    "PCOPPUSDM",
-    aluminum:  "PALUMUSDM",
-    zinc:      "PZINCUSDM",
-    nickel:    "PNICKUSDM",
-    crude_oil: "DCOILWTICO",
-    steel_ppi: "WPU1017",
-    diesel:    "GASDESW",
-    inv_ratio: "ISRATIO",
-    mfg_prod:  "IPMAN",
+function sourceUrl(id: string, dataSource?: string): string {
+  if (dataSource === "alphavantage") {
+    const avFn: Record<string, string> = {
+      copper: "COPPER", aluminum: "ALUMINUM", zinc: "ZINC", nickel: "NICKEL",
+      crude_oil: "CRUDE_OIL", natural_gas: "NATURAL_GAS",
+    };
+    const fn = avFn[id];
+    return fn
+      ? `https://www.alphavantage.co/query?function=${fn}&interval=monthly`
+      : "https://www.alphavantage.co";
+  }
+  const fredSeries: Record<string, string> = {
+    copper: "PCOPPUSDM", aluminum: "PALUMUSDM", zinc: "PZINCUSDM", nickel: "PNICKUSDM",
+    crude_oil: "DCOILWTICO", steel_ppi: "WPU1017",
+    diesel: "GASDESW", inv_ratio: "ISRATIO", mfg_prod: "IPMAN",
   };
-  const series = map[id];
+  const series = fredSeries[id];
   return series ? `https://fred.stlouisfed.org/series/${series}` : "https://fred.stlouisfed.org";
+}
+
+function sourceLabel(dataSource?: string): string {
+  return dataSource === "alphavantage" ? "View on AlphaVantage" : "View on FRED";
 }
 
 export function DetailModal({ target, onClose }: Props) {
@@ -52,9 +61,11 @@ export function DetailModal({ target, onClose }: Props) {
   const unit     = target.type === "commodity" ? target.data.unit     : target.data.unit;
   const current  = target.type === "commodity" ? target.data.currentPrice : target.data.currentValue;
   const change   = target.type === "commodity" ? target.data.changePercent : target.data.changePercent;
-  const id       = target.type === "commodity" ? target.data.id : target.data.id;
-  const source   = target.type === "commodity" ? target.data.source : target.data.source;
-  const updated  = target.type === "commodity" ? target.data.lastUpdated : target.data.lastUpdated;
+  const id         = target.type === "commodity" ? target.data.id : target.data.id;
+  const source     = target.type === "commodity" ? target.data.source : target.data.source;
+  const updated    = target.type === "commodity" ? target.data.lastUpdated : target.data.lastUpdated;
+  const dataSource = target.type === "commodity" ? target.data.dataSource : undefined;
+  const tariff     = target.type === "commodity" ? getTariff(target.data.id) : null;
 
   const isUp   = change > 0;
   const isBad  = target.type === "commodity"
@@ -164,16 +175,47 @@ export function DetailModal({ target, onClose }: Props) {
             </p>
           </div>
 
+          {/* Tariff block — commodities only, when a tariff applies */}
+          {tariff && tariff.ratePercent > 0 && (
+            <div className="bg-amber-950/20 border border-amber-800/30 rounded-lg p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono uppercase tracking-wider text-amber-600">
+                  Tariff Exposure
+                </span>
+                <span className="text-xs font-mono text-amber-400 font-semibold">
+                  {tariff.authority} · +{tariff.ratePercent}%
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-4 text-xs font-mono">
+                <div>
+                  <div className="text-slate-600 uppercase tracking-wider">Base Price</div>
+                  <div className="text-slate-300 mt-0.5">{fmt(current)} {unit}</div>
+                </div>
+                <div>
+                  <div className="text-slate-600 uppercase tracking-wider">Landed (imports)</div>
+                  <div className="text-amber-300 mt-0.5">
+                    {fmt(landedCost(current, tariff.ratePercent))} {unit}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-slate-600 uppercase tracking-wider">HTS Headings</div>
+                  <div className="text-slate-400 mt-0.5">{tariff.htsCodes.slice(0, 3).join(", ")}</div>
+                </div>
+              </div>
+              <p className="text-xs text-slate-600 leading-snug">{tariff.notes}</p>
+            </div>
+          )}
+
           {/* Footer */}
           <div className="flex items-center justify-between pt-2 border-t border-surface-border">
             <p className="text-xs text-slate-700 font-mono">Not financial advice · AI analysis may contain errors</p>
             <a
-              href={fredUrl(id)}
+              href={sourceUrl(id, dataSource)}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs font-mono text-slate-500 hover:text-brand transition-colors flex items-center gap-1"
             >
-              View on FRED
+              {sourceLabel(dataSource)}
               <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M7.5 1.5h3v3M10.5 1.5L6 6M5 2H2a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V7" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>

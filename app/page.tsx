@@ -4,8 +4,11 @@ import { PriceCard } from "@/components/PriceCard";
 import { ShippingPanel } from "@/components/ShippingPanel";
 import { BuildersBrief } from "@/components/BuildersBrief";
 import { HealthScore } from "@/components/HealthScore";
+import { TariffPanel } from "@/components/TariffPanel";
+import { ReshoringPanel } from "@/components/ReshoringPanel";
 import { fetchAllCommodities, fetchAllShipping } from "@/lib/fred";
 import { computeHealthScore } from "@/lib/healthScore";
+import { computeReshoringData } from "@/lib/reshoring";
 import { recordScore, getScoreHistory } from "@/lib/scoreHistory";
 import type { CommodityData, ShippingIndicator } from "@/types";
 
@@ -46,7 +49,8 @@ async function Dashboard() {
     );
   }
 
-  const healthScore = computeHealthScore(commodities, shipping);
+  const healthScore    = computeHealthScore(commodities, shipping);
+  const reshoringData  = computeReshoringData(commodities);
 
   // Most recent data date across all series (for staleness warning)
   const allDates = [
@@ -79,14 +83,19 @@ async function Dashboard() {
           ))}
         </div>
         <p className="text-xs text-slate-600 mt-2 font-mono">
-          Monthly World Bank commodity prices (copper, aluminum, zinc, nickel) ·
-          WTI crude oil (daily, EIA) · Steel: BLS PPI WPU1017 index.
-          Red = price rising (higher cost for buyers). Green = falling. Click any card for AI analysis.
+          Prices from AlphaVantage where available, FRED fallback (World Bank / EIA / BLS).
+          Red = rising cost for buyers · Green = falling · Click any card for AI analysis.
         </p>
       </section>
 
+      {/* Tariff Exposure */}
+      <TariffPanel commodities={commodities} />
+
       {/* Shipping & Activity */}
       <ShippingPanel indicators={shipping} />
+
+      {/* Reshoring Opportunity */}
+      <ReshoringPanel categories={reshoringData} />
 
       {/* AI Brief */}
       <BuildersBrief commodities={commodities} shipping={shipping} />

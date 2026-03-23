@@ -15,6 +15,7 @@ export interface CommodityData {
   frequency: "daily" | "monthly";
   source: string;
   lastUpdated: string;
+  dataSource?: "alphavantage" | "fred";
 }
 
 export interface ShippingIndicator {

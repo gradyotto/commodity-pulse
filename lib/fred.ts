@@ -1,9 +1,16 @@
 /**
  * FRED (Federal Reserve Economic Data) API client.
  * Free API key: https://fred.stlouisfed.org/docs/api/api_key.html
+ *
+ * AlphaVantage is tried first for metals and crude oil when
+ * ALPHA_VANTAGE_API_KEY is set; FRED is the fallback.
  */
 
 import type { CommodityData, ShippingIndicator, PricePoint } from "@/types";
+import {
+  fetchAVCopper, fetchAVAluminum, fetchAVZinc, fetchAVNickel,
+  fetchAVCrudeOil, fetchAVNaturalGas,
+} from "./alphavantage";
 
 const FRED_BASE = "https://api.stlouisfed.org/fred/series/observations";
 const KEY = process.env.FRED_API_KEY ?? "";
@@ -220,16 +227,40 @@ async function fetchMfgProduction(): Promise<ShippingIndicator | null> {
 // ── Public exports ────────────────────────────────────────────────────────────
 
 export async function fetchAllCommodities(): Promise<CommodityData[]> {
-  const results = await Promise.all([
-    fetchMonthlyMetal(SERIES.copper,   { id: "copper",   name: "Copper",   symbol: "CU",    unit: "$/metric ton" }),
-    fetchMonthlyMetal(SERIES.aluminum, { id: "aluminum", name: "Aluminum", symbol: "AL",    unit: "$/metric ton" }),
-    fetchMonthlyMetal(SERIES.zinc,     { id: "zinc",     name: "Zinc",     symbol: "ZN",    unit: "$/metric ton" }),
-    fetchMonthlyMetal(SERIES.nickel,   { id: "nickel",   name: "Nickel",   symbol: "NI",    unit: "$/metric ton" }),
-    fetchCrudeOil(),
-    fetchSteelPPI(),
+  const hasAV = !!process.env.ALPHA_VANTAGE_API_KEY;
+
+  // Fire AlphaVantage (fresher data) and FRED in parallel.
+  // AV results take priority; FRED is the fallback for each slot.
+  // Steel PPI and shipping indicators are FRED-only.
+  const [av, fred] = await Promise.all([
+    hasAV
+      ? Promise.all([
+          fetchAVCopper(), fetchAVAluminum(), fetchAVZinc(), fetchAVNickel(),
+          fetchAVCrudeOil(), fetchAVNaturalGas(),
+        ])
+      : Promise.resolve([null, null, null, null, null, null] as const),
+    Promise.all([
+      fetchMonthlyMetal(SERIES.copper,   { id: "copper",   name: "Copper",   symbol: "CU", unit: "$/metric ton" }),
+      fetchMonthlyMetal(SERIES.aluminum, { id: "aluminum", name: "Aluminum", symbol: "AL", unit: "$/metric ton" }),
+      fetchMonthlyMetal(SERIES.zinc,     { id: "zinc",     name: "Zinc",     symbol: "ZN", unit: "$/metric ton" }),
+      fetchMonthlyMetal(SERIES.nickel,   { id: "nickel",   name: "Nickel",   symbol: "NI", unit: "$/metric ton" }),
+      fetchCrudeOil(),
+      fetchSteelPPI(),
+    ]),
   ]);
 
-  return results.filter((r): r is CommodityData => r !== null);
+  const [avCopper, avAluminum, avZinc, avNickel, avCrudeOil, avNatGas] = av;
+  const [fredCopper, fredAluminum, fredZinc, fredNickel, fredCrudeOil, fredSteel] = fred;
+
+  return [
+    avCopper   ?? fredCopper,
+    avAluminum ?? fredAluminum,
+    avZinc     ?? fredZinc,
+    avNickel   ?? fredNickel,
+    avCrudeOil ?? fredCrudeOil,
+    fredSteel,
+    avNatGas,   // Natural Gas — AV only (new commodity)
+  ].filter((r): r is CommodityData => r !== null);
 }
 
 export async function fetchAllShipping(): Promise<ShippingIndicator[]> {

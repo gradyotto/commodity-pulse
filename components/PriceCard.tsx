@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { TrendSparkline } from "./TrendSparkline";
 import { DetailModal } from "./DetailModal";
+import { TariffBadge } from "./TariffBadge";
+import { getTariff, landedCost } from "@/lib/tariffs";
 import type { CommodityData } from "@/types";
 import clsx from "clsx";
 
@@ -21,10 +23,13 @@ export function PriceCard({ commodity: c }: Props) {
     : isUp ? "bg-red-950 text-red-400" : "bg-green-950 text-green-400";
   const arrow = isFlat ? "→" : isUp ? "↑" : "↓";
 
-  const formattedPrice =
-    c.unit.includes("barrel") || c.unit.includes("index")
-      ? c.currentPrice.toFixed(2)
-      : c.currentPrice.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  const fmt = (v: number) =>
+    c.unit.includes("barrel") || c.unit.includes("index") || c.unit.includes("MMBtu")
+      ? v.toFixed(2)
+      : v.toLocaleString("en-US", { maximumFractionDigits: 0 });
+
+  const formattedPrice = fmt(c.currentPrice);
+  const tariff = getTariff(c.id);
 
   return (
     <>
@@ -50,6 +55,16 @@ export function PriceCard({ commodity: c }: Props) {
             <div className="text-xs text-slate-600 font-mono">{c.unit}</div>
           </div>
         </div>
+
+        {/* Tariff row — only shown when an active tariff applies */}
+        {tariff && tariff.ratePercent > 0 && (
+          <div className="flex items-center justify-between text-xs font-mono">
+            <TariffBadge tariff={tariff} />
+            <span className="text-amber-600/80">
+              Landed: {fmt(landedCost(c.currentPrice, tariff.ratePercent))}
+            </span>
+          </div>
+        )}
 
         <TrendSparkline data={c.history} positive={!isUp} />
 
