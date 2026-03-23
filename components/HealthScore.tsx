@@ -146,7 +146,7 @@ function MethodologyModal({ onClose }: { onClose: () => void }) {
   return (
     /* Backdrop */
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       style={{ backgroundColor: "rgba(0,0,0,0.75)" }}
       onClick={onClose}
     >
@@ -330,7 +330,9 @@ export function HealthScore({ score: s, history = [] }: Props) {
                   <Tooltip
                     contentStyle={{ background: "#141414", border: "1px solid #2a2d3a", borderRadius: 4, fontSize: 11, color: "#e8e8e8" }}
                     formatter={(v: number) => [v, "Score"]}
-                    labelFormatter={(l: string) => l}
+                    labelFormatter={(_: unknown, payload?: Array<{ payload?: ScoreRecord }>) =>
+                      payload?.[0]?.payload?.date ?? ""
+                    }
                   />
                   <ReferenceLine y={65} stroke="#2a2d3a" strokeDasharray="3 3" />
                   <Line

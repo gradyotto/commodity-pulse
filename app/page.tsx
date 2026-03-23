@@ -52,12 +52,11 @@ async function Dashboard() {
   const healthScore    = computeHealthScore(commodities, shipping);
   const reshoringData  = computeReshoringData(commodities);
 
-  // Most recent data date across all series (for staleness warning)
-  const allDates = [
-    ...commodities.map((c) => c.lastUpdated),
-    ...shipping.map((s) => s.lastUpdated),
-  ].sort();
-  const lastDataDate = allDates.at(-1);
+  // Use diesel (weekly FRED) as the staleness signal — it has a reliable
+  // update cadence. Commodity dates are now AV monthly (inherently older)
+  // and would cause false positives on the staleness warning.
+  const lastDataDate = shipping.find((s) => s.id === "diesel")?.lastUpdated
+    ?? shipping.map((s) => s.lastUpdated).sort().at(-1);
 
   // Record today's score + fetch 30-day history (fire-and-forget for recording)
   const [scoreHistory] = await Promise.all([
