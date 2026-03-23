@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { LineChart, Line, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import type { HealthScoreBreakdown } from "@/lib/healthScore";
 import type { ScoreRecord } from "@/lib/scoreHistory";
 import clsx from "clsx";
+
+const toMMDD = (iso: string) =>
+  iso.length >= 10 ? `${iso.slice(5, 7)}/${iso.slice(8, 10)}` : iso;
 
 interface Props {
   score: HealthScoreBreakdown;
@@ -143,7 +147,7 @@ function MethodologyModal({ onClose }: { onClose: () => void }) {
     },
   ];
 
-  return (
+  return createPortal(
     /* Backdrop */
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
@@ -249,7 +253,8 @@ function MethodologyModal({ onClose }: { onClose: () => void }) {
           </p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -331,7 +336,7 @@ export function HealthScore({ score: s, history = [] }: Props) {
                     contentStyle={{ background: "#141414", border: "1px solid #2a2d3a", borderRadius: 4, fontSize: 11, color: "#e8e8e8" }}
                     formatter={(v: number) => [v, "Score"]}
                     labelFormatter={(_: unknown, payload?: Array<{ payload?: ScoreRecord }>) =>
-                      payload?.[0]?.payload?.date ?? ""
+                      toMMDD(payload?.[0]?.payload?.date ?? "")
                     }
                   />
                   <ReferenceLine y={65} stroke="#2a2d3a" strokeDasharray="3 3" />
