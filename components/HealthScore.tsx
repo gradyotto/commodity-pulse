@@ -7,8 +7,10 @@ import type { HealthScoreBreakdown } from "@/lib/healthScore";
 import type { ScoreRecord } from "@/lib/scoreHistory";
 import clsx from "clsx";
 
-const toMMDD = (iso: string) =>
-  iso.length >= 10 ? `${iso.slice(5, 7)}/${iso.slice(8, 10)}` : iso;
+const toMMDDYY = (iso: string) =>
+  iso.length >= 10
+    ? `${iso.slice(5, 7)}/${iso.slice(8, 10)}/${iso.slice(2, 4)}`
+    : iso;
 
 interface Props {
   score: HealthScoreBreakdown;
@@ -336,7 +338,7 @@ export function HealthScore({ score: s, history = [] }: Props) {
                     contentStyle={{ background: "#141414", border: "1px solid #2a2d3a", borderRadius: 4, fontSize: 11, color: "#e8e8e8" }}
                     formatter={(v: number) => [v, "Score"]}
                     labelFormatter={(_: unknown, payload?: Array<{ payload?: ScoreRecord }>) =>
-                      toMMDD(payload?.[0]?.payload?.date ?? "")
+                      toMMDDYY(payload?.[0]?.payload?.date ?? "")
                     }
                   />
                   <ReferenceLine y={65} stroke="#2a2d3a" strokeDasharray="3 3" />

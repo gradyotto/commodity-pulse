@@ -145,7 +145,9 @@ export function DetailModal({ target, onClose }: Props) {
                   axisLine={false}
                   interval="preserveStartEnd"
                   tickFormatter={(d: string) =>
-                    d.length >= 10 ? `${d.slice(5, 7)}/${d.slice(8, 10)}` : d
+                    d.length >= 10
+                      ? `${d.slice(5, 7)}/${d.slice(8, 10)}/${d.slice(2, 4)}`
+                      : d
                   }
                 />
                 <YAxis

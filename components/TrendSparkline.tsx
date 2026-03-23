@@ -3,8 +3,10 @@
 import { LineChart, Line, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import type { PricePoint } from "@/types";
 
-const toMMDD = (iso: string) =>
-  iso.length >= 10 ? `${iso.slice(5, 7)}/${iso.slice(8, 10)}` : iso;
+const toMMDDYY = (iso: string) =>
+  iso.length >= 10
+    ? `${iso.slice(5, 7)}/${iso.slice(8, 10)}/${iso.slice(2, 4)}`
+    : iso;
 
 interface Props {
   data: PricePoint[];
@@ -28,7 +30,7 @@ export function TrendSparkline({ data, positive }: Props) {
           }}
           formatter={(v: number) => [v.toLocaleString(), ""]}
           labelFormatter={(_: unknown, payload?: Array<{ payload?: PricePoint }>) =>
-            toMMDD(payload?.[0]?.payload?.date ?? "")
+            toMMDDYY(payload?.[0]?.payload?.date ?? "")
           }
         />
         <Line

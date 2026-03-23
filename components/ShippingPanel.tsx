@@ -67,7 +67,7 @@ function IndicatorRow({ s }: { s: ShippingIndicator }) {
 
 export function ShippingPanel({ indicators }: Props) {
   return (
-    <section>
+    <section className="isolate">
       <h2 className="text-xs font-mono uppercase tracking-widest text-slate-500 mb-3">
         Logistics & Freight
       </h2>
