@@ -97,7 +97,7 @@ async function Dashboard() {
       <ReshoringPanel categories={reshoringData} />
 
       {/* AI Brief */}
-      <BuildersBrief commodities={commodities} shipping={shipping} />
+      <BuildersBrief />
 
       {/* Embed instructions */}
       <section className="border-t border-surface-border pt-6">
