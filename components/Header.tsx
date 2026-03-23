@@ -14,9 +14,10 @@ export function Header({ fetchedAt, lastDataDate }: Props) {
     timeZoneName: "short",
   });
 
-  // Warn if most recent FRED data is more than 5 days old (weekends, holidays, lag)
+  // Warn if most recent FRED data is more than 7 days old (EIA diesel updates Monday
+  // afternoons, so on Monday morning the freshest weekly series is ~7 days old)
   const isStale = lastDataDate
-    ? (Date.now() - new Date(lastDataDate).getTime()) > 5 * 24 * 60 * 60 * 1000
+    ? (Date.now() - new Date(lastDataDate).getTime()) > 7 * 24 * 60 * 60 * 1000
     : false;
 
   return (
