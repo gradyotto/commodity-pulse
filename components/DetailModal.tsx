@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
@@ -86,9 +87,9 @@ export function DetailModal({ target, onClose }: Props) {
       ? v.toFixed(2)
       : v.toLocaleString("en-US", { maximumFractionDigits: 0 });
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
       onClick={onClose}
     >
@@ -227,6 +228,7 @@ export function DetailModal({ target, onClose }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
