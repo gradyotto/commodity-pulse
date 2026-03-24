@@ -87,6 +87,24 @@ export function DetailModal({ target, onClose }: Props) {
       ? v.toFixed(2)
       : v.toLocaleString("en-US", { maximumFractionDigits: 0 });
 
+  // Price range signal — commodities only
+  const rangePos = (hi - lo) > 0
+    ? Math.max(0, Math.min(1, (current - lo) / (hi - lo)))
+    : 0.5;
+  const rangePct = Math.round(rangePos * 100);
+  const rangeSignal = rangePos >= 0.80
+    ? { label: "Near High", advice: "Consider waiting", bar: "bg-red-500", text: "text-red-400", badge: "bg-red-950" }
+    : rangePos >= 0.60
+    ? { label: "Elevated",  advice: "Monitor closely",  bar: "bg-amber-500", text: "text-amber-400", badge: "bg-amber-950" }
+    : rangePos >= 0.40
+    ? { label: "Mid-Range", advice: "Neutral",           bar: "bg-slate-400", text: "text-slate-400", badge: "bg-slate-800" }
+    : rangePos >= 0.20
+    ? { label: "Favorable", advice: "Good entry point",  bar: "bg-lime-500",  text: "text-lime-400",  badge: "bg-lime-950" }
+    : { label: "Near Low",  advice: "Buy window",        bar: "bg-green-500", text: "text-green-400", badge: "bg-green-950" };
+  const windowLabel = target.type === "commodity" && target.data.frequency === "daily"
+    ? "30-day range"
+    : "14-month range";
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
@@ -119,21 +137,46 @@ export function DetailModal({ target, onClose }: Props) {
         </div>
 
         <div className="px-6 py-5 space-y-6">
-          {/* Current price + stats */}
+          {/* Current price + period avg */}
           <div className="flex flex-wrap gap-4 items-end">
             <div>
               <div className={clsx("text-3xl font-mono font-bold", trendText)}>{fmt(current)}</div>
               <div className="text-xs text-slate-500 font-mono mt-0.5">{unit}</div>
             </div>
-            <div className="flex gap-4 text-xs font-mono pb-1">
-              {[["High", hi], ["Low", lo], ["Avg", avg]].map(([label, val]) => (
-                <div key={label as string}>
-                  <div className="text-slate-600 uppercase tracking-wider">{label as string}</div>
-                  <div className="text-slate-300 mt-0.5">{fmt(val as number)}</div>
-                </div>
-              ))}
+            <div className="text-xs font-mono pb-1">
+              <div className="text-slate-600 uppercase tracking-wider">Period Avg</div>
+              <div className="text-slate-300 mt-0.5">{fmt(avg)}</div>
             </div>
           </div>
+
+          {/* Price range tracker — commodities only */}
+          {target.type === "commodity" && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono text-slate-500 uppercase tracking-wider">
+                  Position in {windowLabel}
+                </span>
+                <span className={clsx("text-xs font-mono font-semibold px-2 py-0.5 rounded", rangeSignal.text, rangeSignal.badge)}>
+                  {rangeSignal.label} · {rangeSignal.advice}
+                </span>
+              </div>
+              <div className="relative h-2.5 bg-surface-border rounded-full">
+                <div
+                  className={clsx("absolute inset-y-0 left-0 rounded-full", rangeSignal.bar)}
+                  style={{ width: `${rangePct}%` }}
+                />
+                <div
+                  className={clsx("absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 border-[#0d0d0d]", rangeSignal.bar)}
+                  style={{ left: `calc(${rangePct}% - 7px)` }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-[10px] font-mono text-slate-600">
+                <span>↓ Low {fmt(lo)}</span>
+                <span className={clsx("font-semibold", rangeSignal.text)}>{rangePct}% of range</span>
+                <span>↑ High {fmt(hi)}</span>
+              </div>
+            </div>
+          )}
 
           {/* Full chart */}
           <div className="bg-surface-raised border border-surface-border rounded-lg p-4">
