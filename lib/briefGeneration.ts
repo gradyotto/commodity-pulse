@@ -4,8 +4,7 @@ import type { CommodityData, ShippingIndicator } from "@/types";
 
 const client = new Anthropic();
 
-export const BRIEF_CACHE_KEY = "brief:latest";
-export const BRIEF_GENERATED_AT_KEY = "brief:generatedAt";
+const BRIEF_CACHE_KEY = "brief:v2"; // single JSON object { text, generatedAt }
 const CACHE_TTL_SECONDS = 60 * 60 * 36; // 36h — survive a missed cron run
 
 // ── Context builder ───────────────────────────────────────────────────────────
@@ -50,12 +49,9 @@ export function buildBriefContext(
 
 export async function getCachedBrief(): Promise<{ text: string; generatedAt: string } | null> {
   try {
-    const [text, generatedAt] = await Promise.all([
-      kv.get<string>(BRIEF_CACHE_KEY),
-      kv.get<string>(BRIEF_GENERATED_AT_KEY),
-    ]);
-    if (!text) return null;
-    return { text, generatedAt: generatedAt ?? new Date().toISOString() };
+    const entry = await kv.get<{ text: string; generatedAt: string }>(BRIEF_CACHE_KEY);
+    if (!entry?.text) return null;
+    return entry;
   } catch {
     return null;
   }
@@ -63,10 +59,7 @@ export async function getCachedBrief(): Promise<{ text: string; generatedAt: str
 
 async function setCachedBrief(text: string, generatedAt: string): Promise<void> {
   try {
-    await Promise.all([
-      kv.set(BRIEF_CACHE_KEY, text, { ex: CACHE_TTL_SECONDS }),
-      kv.set(BRIEF_GENERATED_AT_KEY, generatedAt, { ex: CACHE_TTL_SECONDS }),
-    ]);
+    await kv.set(BRIEF_CACHE_KEY, { text, generatedAt }, { ex: CACHE_TTL_SECONDS });
   } catch {
     // KV not configured — skip silently
   }
