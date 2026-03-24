@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { EmailCapture } from "./EmailCapture";
 
 // Minimal Markdown renderer — handles our subset: ## headers, ** bold, - bullets
 function renderMarkdown(text: string) {
@@ -120,6 +121,16 @@ export function BuildersBrief() {
         <span className="text-xs font-mono text-slate-600 tracking-wide">
           Auto-updates at 6 AM ET
         </span>
+      </div>
+
+      {/* Email subscribe */}
+      <div className="border border-surface-border rounded-lg px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 mb-1">
+        <p className="text-xs font-mono text-slate-500 shrink-0">
+          📬 Get this in your inbox daily
+        </p>
+        <div className="flex-1">
+          <EmailCapture />
+        </div>
       </div>
 
       {status === "loading" && (

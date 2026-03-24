@@ -1,7 +1,35 @@
+import { Resend } from "resend";
 import { fetchAllCommodities, fetchAllShipping } from "@/lib/fred";
-import { generateAndCacheBrief } from "@/lib/briefGeneration";
+import { generateAndCacheBrief, briefToHtml } from "@/lib/briefGeneration";
 
 export const maxDuration = 300; // 5 min — Claude with thinking can be slow
+
+async function sendBriefToSubscribers(text: string, generatedAt: string): Promise<void> {
+  const audienceId = process.env.RESEND_AUDIENCE_ID;
+  if (!audienceId || !process.env.RESEND_API_KEY) return;
+
+  const dateStr = new Date(generatedAt).toLocaleDateString("en-US", {
+    weekday: "long", month: "long", day: "numeric", year: "numeric",
+  });
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { data: broadcast } = await resend.broadcasts.create({
+      audienceId,
+      from: process.env.RESEND_FROM ?? "Tiber Brief <brief@tibermfg.com>",
+      subject: `Tiber Brief — ${dateStr}`,
+      html: briefToHtml(text, generatedAt),
+    });
+
+    if (broadcast?.id) {
+      await resend.broadcasts.send(broadcast.id);
+      console.log(`[cron/brief] Broadcast sent: ${broadcast.id}`);
+    }
+  } catch (err) {
+    // Don't fail the cron if email sending fails — brief is already cached
+    console.error("[cron/brief] Email broadcast error:", err);
+  }
+}
 
 export async function GET(req: Request) {
   // Vercel sends Authorization: Bearer {CRON_SECRET} for cron jobs.
@@ -27,10 +55,14 @@ export async function GET(req: Request) {
       );
     }
 
-    await generateAndCacheBrief(commodities, shipping);
+    const generatedAt = new Date().toISOString();
+    const text = await generateAndCacheBrief(commodities, shipping);
+
+    // Send to email subscribers (non-blocking — cron succeeds even if this fails)
+    await sendBriefToSubscribers(text, generatedAt);
 
     return new Response(
-      JSON.stringify({ ok: true, generatedAt: new Date().toISOString() }),
+      JSON.stringify({ ok: true, generatedAt }),
       { headers: { "Content-Type": "application/json" } }
     );
   } catch (err) {
