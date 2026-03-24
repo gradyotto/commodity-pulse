@@ -9,7 +9,7 @@
 import type { CommodityData, ShippingIndicator, PricePoint } from "@/types";
 import {
   fetchAVCopper, fetchAVAluminum, fetchAVZinc, fetchAVNickel,
-  fetchAVCrudeOil, fetchAVNaturalGas,
+  fetchAVNaturalGas,
 } from "./alphavantage";
 
 const FRED_BASE = "https://api.stlouisfed.org/fred/series/observations";
@@ -236,20 +236,20 @@ export async function fetchAllCommodities(): Promise<CommodityData[]> {
     hasAV
       ? Promise.all([
           fetchAVCopper(), fetchAVAluminum(), fetchAVZinc(), fetchAVNickel(),
-          fetchAVCrudeOil(), fetchAVNaturalGas(),
+          fetchAVNaturalGas(),
         ])
-      : Promise.resolve([null, null, null, null, null, null] as const),
+      : Promise.resolve([null, null, null, null, null] as const),
     Promise.all([
       fetchMonthlyMetal(SERIES.copper,   { id: "copper",   name: "Copper",   symbol: "CU", unit: "$/metric ton" }),
       fetchMonthlyMetal(SERIES.aluminum, { id: "aluminum", name: "Aluminum", symbol: "AL", unit: "$/metric ton" }),
       fetchMonthlyMetal(SERIES.zinc,     { id: "zinc",     name: "Zinc",     symbol: "ZN", unit: "$/metric ton" }),
       fetchMonthlyMetal(SERIES.nickel,   { id: "nickel",   name: "Nickel",   symbol: "NI", unit: "$/metric ton" }),
-      fetchCrudeOil(),
+      fetchCrudeOil(), // always FRED — WTI is daily spot, AV only has monthly averages
       fetchSteelPPI(),
     ]),
   ]);
 
-  const [avCopper, avAluminum, avZinc, avNickel, avCrudeOil, avNatGas] = av;
+  const [avCopper, avAluminum, avZinc, avNickel, avNatGas] = av;
   const [fredCopper, fredAluminum, fredZinc, fredNickel, fredCrudeOil, fredSteel] = fred;
 
   return [
@@ -257,7 +257,7 @@ export async function fetchAllCommodities(): Promise<CommodityData[]> {
     avAluminum ?? fredAluminum,
     avZinc     ?? fredZinc,
     avNickel   ?? fredNickel,
-    avCrudeOil ?? fredCrudeOil,
+    fredCrudeOil, // daily spot price from FRED/EIA
     fredSteel,
     avNatGas,   // Natural Gas — AV only (new commodity)
   ].filter((r): r is CommodityData => r !== null);
