@@ -7,10 +7,7 @@
  */
 
 import type { CommodityData, ShippingIndicator, PricePoint } from "@/types";
-import {
-  fetchAVCopper, fetchAVAluminum, fetchAVZinc, fetchAVNickel,
-  fetchAVNaturalGas,
-} from "./alphavantage";
+import { fetchAVNaturalGas } from "./alphavantage";
 
 const FRED_BASE = "https://api.stlouisfed.org/fred/series/observations";
 const KEY = process.env.FRED_API_KEY ?? "";
@@ -229,37 +226,27 @@ async function fetchMfgProduction(): Promise<ShippingIndicator | null> {
 export async function fetchAllCommodities(): Promise<CommodityData[]> {
   const hasAV = !!process.env.ALPHA_VANTAGE_API_KEY;
 
-  // Fire AlphaVantage (fresher data) and FRED in parallel.
-  // AV results take priority; FRED is the fallback for each slot.
-  // Steel PPI and shipping indicators are FRED-only.
-  const [av, fred] = await Promise.all([
-    hasAV
-      ? Promise.all([
-          fetchAVCopper(), fetchAVAluminum(), fetchAVZinc(), fetchAVNickel(),
-          fetchAVNaturalGas(),
-        ])
-      : Promise.resolve([null, null, null, null, null] as const),
-    Promise.all([
+  // Metals and crude oil come from FRED (authoritative, no rate limits).
+  // Natural Gas is AV-only — no equivalent FRED series.
+  const [fredCopper, fredAluminum, fredZinc, fredNickel, fredCrudeOil, fredSteel, avNatGas] =
+    await Promise.all([
       fetchMonthlyMetal(SERIES.copper,   { id: "copper",   name: "Copper",   symbol: "CU", unit: "$/metric ton" }),
       fetchMonthlyMetal(SERIES.aluminum, { id: "aluminum", name: "Aluminum", symbol: "AL", unit: "$/metric ton" }),
       fetchMonthlyMetal(SERIES.zinc,     { id: "zinc",     name: "Zinc",     symbol: "ZN", unit: "$/metric ton" }),
       fetchMonthlyMetal(SERIES.nickel,   { id: "nickel",   name: "Nickel",   symbol: "NI", unit: "$/metric ton" }),
-      fetchCrudeOil(), // always FRED — WTI is daily spot, AV only has monthly averages
+      fetchCrudeOil(),   // daily WTI spot — FRED/EIA
       fetchSteelPPI(),
-    ]),
-  ]);
-
-  const [avCopper, avAluminum, avZinc, avNickel, avNatGas] = av;
-  const [fredCopper, fredAluminum, fredZinc, fredNickel, fredCrudeOil, fredSteel] = fred;
+      hasAV ? fetchAVNaturalGas() : null,
+    ]);
 
   return [
-    avCopper   ?? fredCopper,
-    avAluminum ?? fredAluminum,
-    avZinc     ?? fredZinc,
-    avNickel   ?? fredNickel,
-    fredCrudeOil, // daily spot price from FRED/EIA
+    fredCopper,
+    fredAluminum,
+    fredZinc,
+    fredNickel,
+    fredCrudeOil,
     fredSteel,
-    avNatGas,   // Natural Gas — AV only (new commodity)
+    avNatGas,
   ].filter((r): r is CommodityData => r !== null);
 }
 
