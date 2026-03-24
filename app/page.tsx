@@ -5,6 +5,7 @@ import { ShippingPanel } from "@/components/ShippingPanel";
 import { BuildersBrief } from "@/components/BuildersBrief";
 import { HealthScore } from "@/components/HealthScore";
 import { TariffPanel } from "@/components/TariffPanel";
+import { PriceRangePanel } from "@/components/PriceRangePanel";
 import { ReshoringPanel } from "@/components/ReshoringPanel";
 import { fetchAllCommodities, fetchAllShipping } from "@/lib/fred";
 import { computeHealthScore } from "@/lib/healthScore";
@@ -93,8 +94,11 @@ async function Dashboard() {
       {/* Shipping & Activity */}
       <ShippingPanel indicators={shipping} />
 
-      {/* Reshoring Opportunity */}
-      <ReshoringPanel categories={reshoringData} />
+      {/* Price Range Tracker */}
+      <PriceRangePanel commodities={commodities} />
+
+      {/* Reshoring Opportunity — hidden for now, revisit later */}
+      {/* <ReshoringPanel categories={reshoringData} /> */}
 
       {/* AI Brief */}
       <BuildersBrief />
