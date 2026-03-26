@@ -1,5 +1,8 @@
 import { Suspense } from "react";
 import { Header } from "@/components/Header";
+
+// Always SSR — ensures health score and data are fresh on every load
+export const revalidate = 0;
 import { PriceCard } from "@/components/PriceCard";
 import { ShippingPanel } from "@/components/ShippingPanel";
 import { BuildersBrief } from "@/components/BuildersBrief";
