@@ -61,30 +61,41 @@ function formatTrend(pct: number): string {
   return "flat";
 }
 
+function changeLabel(frequency: "daily" | "monthly"): string {
+  if (frequency === "daily") return "day-over-day";
+  return "vs. prior month";
+}
+
 export function buildBriefContext(
   commodities: CommodityData[],
   shipping: ShippingIndicator[]
 ): string {
   const lines: string[] = [
-    "=== RAW MATERIAL PRICES (latest period vs. prior period) ===",
+    "=== RAW MATERIAL PRICES ===",
   ];
 
   for (const c of commodities) {
     lines.push(
-      `${c.name} (${c.symbol}): ${c.currentPrice.toFixed(2)} ${c.unit} — ${formatTrend(c.changePercent)} | as of ${c.lastUpdated}`
+      `${c.name} (${c.symbol}): ${c.currentPrice.toFixed(2)} ${c.unit} — ${formatTrend(c.changePercent)} ${changeLabel(c.frequency)} | latest reading: ${c.lastUpdated} | prior: ${c.priorPrice.toFixed(2)}`
     );
   }
 
   lines.push("");
   lines.push("=== SUPPLY CHAIN & LOGISTICS INDICATORS ===");
 
+  const shippingFreq: Record<string, "daily" | "monthly"> = {
+    diesel: "monthly",   // EIA weekly, change vs ~1 month ago
+    inv_ratio: "monthly",
+    mfg_prod: "monthly",
+  };
+
   for (const s of shipping) {
     let context = "";
-    if (s.id === "inv_ratio") {
-      context = "(months of supply; rising = slower sales or better supply)";
-    }
+    if (s.id === "inv_ratio") context = "(months of supply; rising = slack demand or improving supply)";
+    if (s.id === "mfg_prod")  context = "(index 2017=100; rising = expanding output)";
+    const freq = shippingFreq[s.id] ?? "monthly";
     lines.push(
-      `${s.name}: ${s.currentValue.toFixed(1)} ${s.unit} — ${formatTrend(s.changePercent)} ${context} | as of ${s.lastUpdated}`
+      `${s.name}: ${s.currentValue.toFixed(2)} ${s.unit} — ${formatTrend(s.changePercent)} ${changeLabel(freq)} ${context} | latest: ${s.lastUpdated} | prior: ${s.priorValue.toFixed(2)}`
     );
   }
 
@@ -125,49 +136,46 @@ export async function generateAndCacheBrief(
     day: "numeric",
   });
 
-  const systemPrompt = `You are a senior supply chain analyst who writes the daily "Tiber Brief" — a concise, authoritative market intelligence report for procurement managers, operations directors, and executives at domestic hardware and manufacturing companies.
+  const systemPrompt = `You are a senior supply chain analyst writing the daily "Tiber Brief" — a concise morning intelligence report for procurement managers, operations directors, and executives at US hardware and manufacturing companies.
 
-Your audience buys raw materials (metals, plastics, energy) in volume. They care about:
-- How price changes affect their COGS and margins
-- Whether to accelerate purchases (buy ahead) or hold
-- Supply chain disruptions, lead-time risks, and logistics costs
-- Actionable intelligence they can act on this week
+Your audience buys raw materials (metals, energy) in volume. They are reading this first thing in the morning and need to know:
+- What changed since the last reading and whether it matters
+- Whether to act today — accelerate purchases, lock in contracts, or hold
+- Any signals that suggest conditions are shifting
 
-Tone: direct, professional, data-driven. No fluff. Use specific numbers.`;
+Tone: direct, data-driven, no fluff. Lead with what changed. Use exact price numbers from the data.`;
 
-  const userPrompt = `Today is ${today}. Write the daily Tiber Brief using the market data below.
+  const userPrompt = `Today is ${today}. Write the Tiber Brief based on the latest market data below.
 
-Structure the brief exactly as follows (use these Markdown headers):
+Focus on changes from the prior reading — day-over-day for daily series (crude oil), period-over-period for monthly/weekly series. Call out moves that are material (>1% for daily, >2% for monthly). If a market is flat, say so briefly and move on.
+
+Structure exactly as follows:
 
 ## 🏭 Market Pulse
-2-3 sentence executive summary. Overall supply chain health this week (Stable / Cautious / Volatile). Single most important thing procurement managers need to know.
+2-3 sentences. What is the single most important development today? Overall condition: Stable / Cautious / Volatile. Be specific — name the commodity or indicator driving the call.
 
 ## 🔩 Materials Market
-For each commodity with significant movement (>2% change), write 2-3 sentences: current price, direction, why it matters for manufacturers, and what to do. Group minor movers together in one sentence.
+For each commodity with a notable move, 1-2 sentences: current price, change from prior reading, and what it means for a buyer today. Group flat/minor movers into one sentence. Always cite the actual numbers.
 
 ## 🚢 Logistics & Freight
-2-3 sentences covering freight costs and supplier lead times. Flag any warning signs.
+2-3 sentences on diesel, inventory ratios, and manufacturing output. Flag any direction changes from prior readings.
 
-## 📋 Procurement Playbook
-3-5 specific, actionable bullet points for this week. Examples: "Lock in Q2 copper contracts now — price climbing toward 12-month high" or "Hold steel inventory; PPI trending down."
+## 📋 Today's Playbook
+3-5 specific actions a procurement manager should consider today. Be direct: "Buy", "Hold", "Watch", "Lock in now", "Wait". Cite prices and the reason in one line each.
 
 ## ⚠️ Watch List
-2-3 items to monitor this week. Short bullets only.
+2-3 forward-looking signals to monitor. Short bullets only.
 
 ---
 
-MARKET DATA:
+MARKET DATA (change labels indicate the comparison period):
 ${context}
 
-Keep the total brief to 450–650 words. Be specific — cite actual price numbers from the data.`;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const thinking = { type: "adaptive" } as any;
+Keep total brief to 400–550 words. Every claim should reference a number from the data.`;
 
   const response = await client.messages.create({
     model: "claude-opus-4-6",
     max_tokens: 1500,
-    thinking,
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],
   });
