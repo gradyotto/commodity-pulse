@@ -107,9 +107,13 @@ export function buildBriefContext(
 export async function getCachedBrief(): Promise<{ text: string; generatedAt: string } | null> {
   try {
     const entry = await kv.get<{ text: string; generatedAt: string }>(BRIEF_CACHE_KEY);
-    if (!entry?.text) return null;
+    if (!entry?.text) {
+      console.log("[brief] KV miss — no cached brief found");
+      return null;
+    }
     return entry;
-  } catch {
+  } catch (err) {
+    console.error("[brief] KV read error:", err);
     return null;
   }
 }
@@ -117,8 +121,10 @@ export async function getCachedBrief(): Promise<{ text: string; generatedAt: str
 async function setCachedBrief(text: string, generatedAt: string): Promise<void> {
   try {
     await kv.set(BRIEF_CACHE_KEY, { text, generatedAt }, { ex: CACHE_TTL_SECONDS });
-  } catch {
-    // KV not configured — skip silently
+    console.log("[brief] KV write success — generatedAt:", generatedAt);
+  } catch (err) {
+    console.error("[brief] KV write error:", err);
+    throw err; // re-throw so cron route sees the failure
   }
 }
 

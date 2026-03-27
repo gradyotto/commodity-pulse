@@ -90,7 +90,7 @@ export function BuildersBrief() {
 
     async function load() {
       try {
-        const res = await fetch("/api/brief");
+        const res = await fetch("/api/brief", { cache: "no-store" });
         if (res.status === 204) {
           if (!cancelled) setStatus("empty");
           return;
