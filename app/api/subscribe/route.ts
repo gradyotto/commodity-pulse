@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import { render } from "@react-email/render";
+import { WelcomeEmail } from "@/emails/WelcomeEmail";
 
 export async function POST(req: Request) {
   const { email } = (await req.json()) as { email?: string };
@@ -12,9 +14,20 @@ export async function POST(req: Request) {
     return Response.json({ error: "Subscriptions not configured" }, { status: 503 });
   }
 
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.contacts.create({ email, audienceId, unsubscribed: false });
+    // Add to audience and send welcome email in parallel
+    await Promise.all([
+      resend.contacts.create({ email, audienceId, unsubscribed: false }),
+      resend.emails.send({
+        from: process.env.RESEND_FROM ?? "Tiber Brief <brief@tibermfg.com>",
+        to: email,
+        subject: "You're subscribed to the Tiber Brief",
+        html: await render(WelcomeEmail({ unsubscribeUrl: "{{{RESEND_UNSUBSCRIBE_URL}}}" })),
+      }),
+    ]);
+
     return Response.json({ ok: true });
   } catch (err) {
     console.error("[subscribe]", err);
