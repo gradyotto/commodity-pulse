@@ -1,9 +1,14 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { getCachedBrief } from "@/lib/briefGeneration";
 
 // Always hit KV — never serve a cached route response
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  // Explicitly opt out of Next.js data cache so @vercel/kv's internal
+  // fetch calls are never served from a stale cached response
+  noStore();
+
   const cached = await getCachedBrief();
 
   if (!cached) {
