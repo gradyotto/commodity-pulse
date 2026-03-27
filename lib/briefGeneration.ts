@@ -61,9 +61,12 @@ function formatTrend(pct: number): string {
   return "flat";
 }
 
-function changeLabel(frequency: "daily" | "monthly"): string {
-  if (frequency === "daily") return "day-over-day";
-  return "vs. prior month";
+function dataAge(frequency: "daily" | "monthly", lastUpdated: string): string {
+  if (frequency === "daily") return `as of ${lastUpdated} (daily)`;
+  // For monthly series, show the month the observation covers
+  const d = new Date(lastUpdated);
+  const month = d.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+  return `latest available: ${month} (monthly — may be 4–8 weeks old)`;
 }
 
 export function buildBriefContext(
@@ -72,30 +75,25 @@ export function buildBriefContext(
 ): string {
   const lines: string[] = [
     "=== RAW MATERIAL PRICES ===",
+    "IMPORTANT: Monthly series reflect the most recently published period, which may be 4-8 weeks old. When writing about monthly data, always cite the observation period (e.g. 'February data shows...'), never imply it happened today or this week.",
+    "",
   ];
 
   for (const c of commodities) {
     lines.push(
-      `${c.name} (${c.symbol}): ${c.currentPrice.toFixed(2)} ${c.unit} — ${formatTrend(c.changePercent)} ${changeLabel(c.frequency)} | latest reading: ${c.lastUpdated} | prior: ${c.priorPrice.toFixed(2)}`
+      `${c.name} (${c.symbol}): ${c.currentPrice.toFixed(2)} ${c.unit} — ${formatTrend(c.changePercent)} vs prior period | ${dataAge(c.frequency, c.lastUpdated)} | prior reading: ${c.priorPrice.toFixed(2)}`
     );
   }
 
   lines.push("");
   lines.push("=== SUPPLY CHAIN & LOGISTICS INDICATORS ===");
 
-  const shippingFreq: Record<string, "daily" | "monthly"> = {
-    diesel: "monthly",   // EIA weekly, change vs ~1 month ago
-    inv_ratio: "monthly",
-    mfg_prod: "monthly",
-  };
-
   for (const s of shipping) {
     let context = "";
     if (s.id === "inv_ratio") context = "(months of supply; rising = slack demand or improving supply)";
     if (s.id === "mfg_prod")  context = "(index 2017=100; rising = expanding output)";
-    const freq = shippingFreq[s.id] ?? "monthly";
     lines.push(
-      `${s.name}: ${s.currentValue.toFixed(2)} ${s.unit} — ${formatTrend(s.changePercent)} ${changeLabel(freq)} ${context} | latest: ${s.lastUpdated} | prior: ${s.priorValue.toFixed(2)}`
+      `${s.name}: ${s.currentValue.toFixed(2)} ${s.unit} — ${formatTrend(s.changePercent)} vs prior period ${context} | latest available: ${s.lastUpdated} (monthly) | prior: ${s.priorValue.toFixed(2)}`
     );
   }
 
@@ -153,7 +151,11 @@ Tone: direct, data-driven, no fluff. Lead with what changed. Use exact price num
 
   const userPrompt = `Today is ${today}. Write the Tiber Brief based on the latest market data below.
 
-Focus on changes from the prior reading — day-over-day for daily series (crude oil), period-over-period for monthly/weekly series. Call out moves that are material (>1% for daily, >2% for monthly). If a market is flat, say so briefly and move on.
+Data freshness rules — follow these strictly:
+- Daily series (crude oil): reference the specific date, changes are recent and can be framed as current
+- Monthly series (metals, steel PPI, nat gas, indicators): always cite the observation period by name ("February data", "the January reading") — never write as if the change happened today or this week. A reader receiving this on March 27 should understand that a February data point is the most recent available, not a signal from this morning.
+
+Call out moves that are material (>1% for daily, >2% for monthly). If a market is flat, say so briefly and move on.
 
 Structure exactly as follows:
 
